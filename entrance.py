@@ -12,7 +12,7 @@ import RPi.GPIO as GPIO
 LED_RED = 18
 LED_GREEN = 23 
 BUTTON = 25
-ENTRANCE_LENGTH = 5
+ENTRANCE_LENGTH =30 
 playing = False
 
 if sys.argv[1:]:
