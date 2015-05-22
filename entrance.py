@@ -12,9 +12,9 @@ from NFCReader import NFCReader
 
 # hardcode some entrance music for now - eventually put this in a db
 music = { '91ab290f': 'https://open.spotify.com/track/7c6gwmXP64tmpbmA86wHIk',
-          '6d839875': 'spotify:track:1pIEoQQxX3Kv0dRpAT9ro8'
+          '6d839875': 'spotify:track:0DBTOeaZxmCh3aQuBAoBtm'
         }
-ENTRANCE_LENGTH = 30
+ENTRANCE_LENGTH = 3
 
 
 # spotify stuff
