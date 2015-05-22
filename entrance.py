@@ -52,11 +52,6 @@ audio = spotify.PortAudioSink(session)
 logged_in = threading.Event()
 end_of_track = threading.Event()
 
-# nfc stuff
-
-def hex_dump(string):
-    """Dumps data as hexstrings"""
-    return ' '.join(["%0.2X" % ord(x) for x in string])
 if __name__ == '__main__':
     logger = logging.getLogger("cardhandler").info
 
