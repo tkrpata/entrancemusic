@@ -73,7 +73,13 @@ loop = spotify.EventLoop(session)
 loop.start()
 
 # Connect an audio sink
-audio = spotify.PortAudioSink(session)
+if config['audiosink'] == 'portaudio':
+  audio = spotify.PortAudioSink(session)
+elif config['audiosink'] == 'alsaaudio':
+  audio = spotify.AlsaSink(session)
+else:
+  print "No valid audio sink config, using default"
+  audio = spotify.AlsaSink(session)
 
 # Events for coordination
 logged_in = threading.Event()
