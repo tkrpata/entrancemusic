@@ -16,7 +16,7 @@ import urllib2
 from NFCReader import NFCReader
 
 # put these in a config file please
-ENTRANCE_LENGTH = 10
+ENTRANCE_LENGTH = 30
 WEB_SERVICE = "https://entrancemusic.herokuapp.com/cards/getcard"
 
 Playing = False
@@ -25,7 +25,6 @@ Playing = False
 def get_track_online(id):
   url = WEB_SERVICE + "/" + id
   res = json.load(urllib2.urlopen(url))
-  print res
   return res[0]['track']
 
 # spotify stuff
@@ -55,6 +54,16 @@ def timelimit():
   time.sleep(ENTRANCE_LENGTH)
   pause()
   playing.clear()
+  print "Done playing"
+  return
+
+def nfc_run(nfcr):
+  while nfcr.run():
+    time.sleep(0.1)
+
+def exit_gracefully(signum, frame):
+  signal.signal(signal.SIGINT, original_sigint)
+  sys.exit(1)
 
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
@@ -71,15 +80,6 @@ logged_in = threading.Event()
 end_of_track = threading.Event()
 playing = threading.Event()
 
-def run_thread(nfcr):
-  while nfcr.run():
-    time.sleep(0.1)
-    pass
-
-def exit_gracefully(signum, frame):
-  signal.signal(signal.SIGINT, original_sigint)
-  sys.exit(1)
-
 if __name__ == '__main__':
     logger = logging.getLogger("cardhandler").info
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     logged_in.wait()
     
     nfcr = NFCReader(logger)
-    t = threading.Thread(target=run_thread,args=(nfcr,))
+    t = threading.Thread(target=nfc_run,args=(nfcr,))
     t.start()
 
     original_sigint = signal.getsignal(signal.SIGINT)
@@ -105,9 +105,8 @@ if __name__ == '__main__':
           if playing.is_set():
             print "Already playing! Wait your turn!"
           else:
-            print "getting track from db"
+            print "Getting track from db"
             track = get_track_online(card_id)
-            print "got track"
             play(track)
         time.sleep(0.1)
         pass
