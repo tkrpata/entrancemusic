@@ -25,7 +25,10 @@ Playing = False
 def get_track_online(id):
   url = WEB_SERVICE + "/" + id
   res = json.load(urllib2.urlopen(url))
-  return res[0]['track']
+  if res:
+    return res[0]['track']
+  else:
+    return None
 
 # spotify stuff
 def on_connection_state_updated(session):
@@ -107,6 +110,9 @@ if __name__ == '__main__':
           else:
             print "Getting track from db"
             track = get_track_online(card_id)
-            play(track)
+            if track:
+              play(track)
+            else: 
+              print "Card ID not found"
         time.sleep(0.1)
         pass
