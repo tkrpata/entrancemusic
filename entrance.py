@@ -8,14 +8,20 @@ import nfc
 import spotify
 import threading
 import os
+import json
+import urllib2
 from NFCReader import NFCReader
 
-# hardcode some entrance music for now - eventually put this in a db
-music = { '91ab290f': 'https://open.spotify.com/track/7c6gwmXP64tmpbmA86wHIk',
-          '6d839875': 'spotify:track:0DBTOeaZxmCh3aQuBAoBtm'
-        }
-ENTRANCE_LENGTH = 3
+# put these in a config file please
+ENTRANCE_LENGTH = 30
+WEB_SERVICE = "https://entrancemusic.herokuapp.com/cards/getcard"
 
+# connect to the web service and get the track link
+def get_track_online(id):
+  url = WEB_SERVICE + "/" + id
+  res = json.load(urllib2.urlopen(url))
+  print res
+  return res[0]['track']
 
 # spotify stuff
 def on_connection_state_updated(session):
@@ -71,6 +77,7 @@ if __name__ == '__main__':
         card_id = nfcr.card_id()
         if card_id != None:
           print "Got back card id:",card_id
-          play(music[card_id])
+          track = get_track_online(card_id)
+          play(track)
         time.sleep(0.1)
         pass
