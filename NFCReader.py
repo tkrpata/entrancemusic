@@ -30,7 +30,6 @@ class NFCReader(object):
     MC_READ = 0x30
     MC_WRITE = 0xA0
     card_timeout = 10
-    card_id = None
 
     def __init__(self, logger):
         self.__context = None
@@ -40,6 +39,7 @@ class NFCReader(object):
         self._card_present = False
         self._card_last_seen = None
         self._card_uid = None
+        self._card_id = None # this is the hex representation of the card id
         self._clean_card()
 
         mods = [(nfc.NMT_ISO14443A, nfc.NBR_106)]
@@ -218,7 +218,7 @@ class NFCReader(object):
         key = "\xff\xff\xff\xff\xff\xff"
         card_id = uid.encode("hex")
         print "Reading card", card_id
-        self.card_id = card_id
+        self._card_id = card_id
         
         #self._card_uid = self.select_card()
         #self._authenticate(0x00, uid, key)
@@ -230,5 +230,10 @@ class NFCReader(object):
     def write_card(self, uid, data):
         """Accepts data of the recently read card with UID uid, and writes any changes necessary to it"""
         raise NotImplementedError
+
+    def card_id(self):
+      card_id = self._card_id
+      self._card_id = None
+      return card_id
 
 
