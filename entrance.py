@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 
-import time
-import logging
-import ctypes
-import string
-import nfc
-import spotify
-import threading
-import os
+#import ctypes
+#import nfc
 import json
+import logging
+import os
+import signal
+import spotify
+import string
+import sys
+import threading
+import time
 import urllib2
+
 from NFCReader import NFCReader
 
 # put these in a config file please
-ENTRANCE_LENGTH = 30
+ENTRANCE_LENGTH = 10
 WEB_SERVICE = "https://entrancemusic.herokuapp.com/cards/getcard"
+
+Playing = False
 
 # connect to the web service and get the track link
 def get_track_online(id):
@@ -37,14 +42,19 @@ def play(track_uri):
   track = session.get_track(track_uri).load(timeout=30)
   session.player.load(track)
   print "Play"
-  session.player.play()
-  # don't play whole track - just let it background play for a predefined amount of time, then stop
-  time.sleep(ENTRANCE_LENGTH)
-  print "Done playing!"
-  pause()
+  Playing = True
+  t = threading.Thread(target=timelimit)
+  t.start()
 
 def pause():
   session.player.pause()
+
+def timelimit():
+  playing.set()
+  session.player.play()
+  time.sleep(ENTRANCE_LENGTH)
+  pause()
+  playing.clear()
 
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
@@ -59,6 +69,16 @@ audio = spotify.PortAudioSink(session)
 # Events for coordination
 logged_in = threading.Event()
 end_of_track = threading.Event()
+playing = threading.Event()
+
+def run_thread(nfcr):
+  while nfcr.run():
+    time.sleep(0.1)
+    pass
+
+def exit_gracefully(signum, frame):
+  signal.signal(signal.SIGINT, original_sigint)
+  sys.exit(1)
 
 if __name__ == '__main__':
     logger = logging.getLogger("cardhandler").info
@@ -71,13 +91,23 @@ if __name__ == '__main__':
     logged_in.wait()
     
     nfcr = NFCReader(logger)
+    t = threading.Thread(target=run_thread,args=(nfcr,))
+    t.start()
+
+    original_sigint = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, exit_gracefully)
 
     print "OK GO"
-    while nfcr.run():
+    while True:
         card_id = nfcr.card_id()
         if card_id != None:
           print "Got back card id:",card_id
-          track = get_track_online(card_id)
-          play(track)
+          if playing.is_set():
+            print "Already playing! Wait your turn!"
+          else:
+            print "getting track from db"
+            track = get_track_online(card_id)
+            print "got track"
+            play(track)
         time.sleep(0.1)
         pass

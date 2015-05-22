@@ -140,78 +140,6 @@ class NFCReader(object):
         if nfc.nfc_device_set_property_bool(self.__device, nfc.NP_HANDLE_PARITY, True) < 0:
             raise Exception("Error setting Easy Framing property")
 
-    def _read_block(self, block):
-        """Reads a block from a Mifare Card after authentication
-
-           Returns the data read or raises an exception
-        """
-        if nfc.nfc_device_set_property_bool(self.__device, nfc.NP_EASY_FRAMING, True) < 0:
-            raise Exception("Error setting Easy Framing property")
-        abttx = (ctypes.c_uint8 * 2)()
-        abttx[0] = self.MC_READ
-        abttx[1] = block
-        abtrx = (ctypes.c_uint8 * 250)()
-        res = nfc.nfc_initiator_transceive_bytes(self.__device, ctypes.pointer(abttx), len(abttx),
-                                                 ctypes.pointer(abtrx), len(abtrx), 0)
-        if res < 0:
-            raise IOError("Error reading data")
-        return "".join([chr(abtrx[i]) for i in range(res)])
-
-    def __write_block(self, block, data):
-        """Writes a block of data to a Mifare Card after authentication
-
-           Raises an exception on error
-        """
-        if nfc.nfc_device_set_property_bool(self.__device, nfc.NP_EASY_FRAMING, True) < 0:
-            raise Exception("Error setting Easy Framing property")
-        if len(data) > 16:
-            raise ValueError("Data value to be written cannot be more than 16 characters.")
-        abttx = (ctypes.c_uint8 * 18)()
-        abttx[0] = self.MC_WRITE
-        abttx[1] = block
-        abtrx = (ctypes.c_uint8 * 250)()
-        for i in range(16):
-            abttx[i + 2] = ord((data + "\x00" * (16 - len(data)))[i])
-        return nfc.nfc_initiator_transceive_bytes(self.__device, ctypes.pointer(abttx), len(abttx),
-                                                  ctypes.pointer(abtrx), len(abtrx), 0)
-
-    def _authenticate(self, block, uid, key = "\xff\xff\xff\xff\xff\xff", use_b_key = False):
-        """Authenticates to a particular block using a specified key"""
-        if nfc.nfc_device_set_property_bool(self.__device, nfc.NP_EASY_FRAMING, True) < 0:
-            raise Exception("Error setting Easy Framing property")
-        abttx = (ctypes.c_uint8 * 12)()
-        abttx[0] = self.MC_AUTH_A if not use_b_key else self.MC_AUTH_B
-        abttx[1] = block
-        for i in range(6):
-            abttx[i + 2] = ord(key[i])
-        for i in range(4):
-            abttx[i + 8] = ord(uid[i])
-        abtrx = (ctypes.c_uint8 * 250)()
-        return nfc.nfc_initiator_transceive_bytes(self.__device, ctypes.pointer(abttx), len(abttx),
-                                                  ctypes.pointer(abtrx), len(abtrx), 0)
-
-    def auth_and_read(self, block, uid, key = "\xff\xff\xff\xff\xff\xff"):
-        """Authenticates and then reads a block
-
-           Returns '' if the authentication failed
-        """
-        # Reselect the card so that we can reauthenticate
-        self.select_card()
-        res = self._authenticate(block, uid, key)
-        if res >= 0:
-            return self._read_block(block)
-        return ''
-
-    def auth_and_write(self, block, uid, data, key = "\xff\xff\xff\xff\xff\xff"):
-        """Authenticates and then writes a block
-
-        """
-        res = self._authenticate(block, uid, key)
-        if res >= 0:
-            return self.__write_block(block, data)
-        self.select_card()
-        return ""
-
     def read_card(self, uid):
         """Takes a uid, reads the card and return data for use in writing the card"""
         # as of right now I don't want card data, just the UID
@@ -219,18 +147,8 @@ class NFCReader(object):
         card_id = uid.encode("hex")
         print "Reading card", card_id
         self._card_id = card_id
+        return
         
-        #self._card_uid = self.select_card()
-        #self._authenticate(0x00, uid, key)
-        #block = 0
-        #for block in range(64):
-        #    data = self.auth_and_read(block, uid, key)
-        #    print block, data.encode("hex"), "".join([ x if x in string.printable else "." for x in data])
-
-    def write_card(self, uid, data):
-        """Accepts data of the recently read card with UID uid, and writes any changes necessary to it"""
-        raise NotImplementedError
-
     def card_id(self):
       card_id = self._card_id
       self._card_id = None
