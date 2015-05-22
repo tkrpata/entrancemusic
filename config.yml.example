@@ -1,0 +1,5 @@
+entrance_length: 30
+web_service: "https://apiendpoint/com/cards/getcard"
+spotify:
+  user: username 
+  pass: password

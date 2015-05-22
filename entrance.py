@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-#import ctypes
-#import nfc
 import json
 import logging
 import os
@@ -12,18 +10,17 @@ import sys
 import threading
 import time
 import urllib2
+import yaml
 
 from NFCReader import NFCReader
 
-# put these in a config file please
-ENTRANCE_LENGTH = 30
-WEB_SERVICE = "https://entrancemusic.herokuapp.com/cards/getcard"
+config = yaml.load(file("config.yml"))
 
 Playing = False
 
 # connect to the web service and get the track link
 def get_track_online(id):
-  url = WEB_SERVICE + "/" + id
+  url = config['web_service'] + "/" + id
   res = json.load(urllib2.urlopen(url))
   if res:
     return res[0]['track']
@@ -54,7 +51,7 @@ def pause():
 def timelimit():
   playing.set()
   session.player.play()
-  time.sleep(ENTRANCE_LENGTH)
+  time.sleep(config['entrance_length'])
   pause()
   playing.clear()
   print "Done playing"
@@ -90,7 +87,7 @@ if __name__ == '__main__':
     session.on(
       spotify.SessionEvent.CONNECTION_STATE_UPDATED, on_connection_state_updated)
     session.on(spotify.SessionEvent.END_OF_TRACK, on_end_of_track)
-    session.login(os.environ["SPOTIFY_USER"], os.environ["SPOTIFY_PASS"] )
+    session.login(config['spotify']['user'], config['spotify']['pass'] )
     logged_in.wait()
     
     nfcr = NFCReader(logger)
