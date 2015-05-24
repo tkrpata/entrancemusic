@@ -1,6 +1,10 @@
 entrance_length: 30
-web_service: "https://apiendpoint/com/cards/getcard"
+web_service: "https://apihost.com/cards/getcard"
 spotify:
-  user: username 
+  user: spotify_premium_username
   pass: password
-audiosink: portaudio
+audiosink: alsaaudio
+platform: 
+  name: "raspberrypi"
+  green: 21
+  red: 16
