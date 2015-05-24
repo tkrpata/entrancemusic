@@ -3,3 +3,4 @@ web_service: "https://apiendpoint/com/cards/getcard"
 spotify:
   user: username 
   pass: password
+audiosink: portaudio
