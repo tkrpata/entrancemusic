@@ -16,8 +16,6 @@ from NFCReader import NFCReader
 
 config = yaml.load(file("config.yml"))
 
-Playing = False
-
 # connect to the web service and get the track link
 def get_track_online(id):
   url = config['web_service'] + "/" + id
@@ -40,8 +38,8 @@ def play(track_uri):
   print "Loading",track_uri
   track = session.get_track(track_uri).load(timeout=30)
   session.player.load(track)
+  loading.clear()
   print "Play"
-  Playing = True
   t = threading.Thread(target=timelimit)
   t.start()
 
@@ -65,6 +63,27 @@ def exit_gracefully(signum, frame):
   signal.signal(signal.SIGINT, original_sigint)
   sys.exit(1)
 
+def pi_monitor():
+  import RPi.GPIO as GPIO
+  GPIO.setmode(GPIO.BCM)
+  GPIO.setup(config['platform']['red'], GPIO.OUT)
+  GPIO.setup(config['platform']['green'], GPIO.OUT)
+
+  while True:
+    if playing.is_set():
+      GPIO.output(config['platform']['red'], True)
+      GPIO.output(config['platform']['green'], False)
+    elif loading.is_set():
+      GPIO.output(config['platform']['green'], False)
+      while loading.is_set():
+        GPIO.output(config['platform']['red'], True)
+        time.sleep(0.1)
+        GPIO.output(config['platform']['red'], False)
+        time.sleep(0.1)
+    else:
+      GPIO.output(config['platform']['red'], False)
+      GPIO.output(config['platform']['green'], True)
+
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
 
@@ -85,8 +104,14 @@ else:
 logged_in = threading.Event()
 end_of_track = threading.Event()
 playing = threading.Event()
+loading = threading.Event()
 
 if __name__ == '__main__':
+    if config['platform']['name'] == "raspberrypi":
+      t = threading.Thread(target=pi_monitor)
+      t.start()
+
+
     logger = logging.getLogger("cardhandler").info
 
     # spotify
@@ -111,6 +136,7 @@ if __name__ == '__main__':
           if playing.is_set():
             print "Already playing! Wait your turn!"
           else:
+            loading.set()
             print "Getting track from db"
             track = get_track_online(card_id)
             if track:
