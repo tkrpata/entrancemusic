@@ -57,9 +57,13 @@ def timelimit():
 
 def nfc_run(nfcr):
   while nfcr.run():
+    if shutdown.is_set():
+      return
     time.sleep(0.1)
 
 def exit_gracefully(signum, frame):
+  print "Ctrl C"
+  shutdown.set()
   signal.signal(signal.SIGINT, original_sigint)
   sys.exit(1)
 
@@ -68,21 +72,30 @@ def pi_monitor():
   GPIO.setmode(GPIO.BCM)
   GPIO.setup(config['platform']['red'], GPIO.OUT)
   GPIO.setup(config['platform']['green'], GPIO.OUT)
+  GPIO.output(config['platform']['red'], False)
+  GPIO.output(config['platform']['green'], False)
 
   while True:
+    if shutdown.is_set():
+      GPIO.output(config['platform']['red'], False)
+      GPIO.output(config['platform']['green'], False)
+      return
     if playing.is_set():
       GPIO.output(config['platform']['red'], True)
       GPIO.output(config['platform']['green'], False)
     elif loading.is_set():
-      GPIO.output(config['platform']['green'], False)
+      GPIO.output(config['platform']['red'], False)
       while loading.is_set():
-        GPIO.output(config['platform']['red'], True)
+        GPIO.output(config['platform']['green'], True)
         time.sleep(0.1)
-        GPIO.output(config['platform']['red'], False)
+        GPIO.output(config['platform']['green'], False)
         time.sleep(0.1)
-    else:
+    elif ready.is_set():
       GPIO.output(config['platform']['red'], False)
       GPIO.output(config['platform']['green'], True)
+    else:
+      GPIO.output(config['platform']['red'], False)
+      GPIO.output(config['platform']['green'], False)
 
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
@@ -105,6 +118,8 @@ logged_in = threading.Event()
 end_of_track = threading.Event()
 playing = threading.Event()
 loading = threading.Event()
+ready = threading.Event()
+shutdown = threading.Event()
 
 if __name__ == '__main__':
     if config['platform']['name'] == "raspberrypi":
@@ -130,12 +145,14 @@ if __name__ == '__main__':
 
     print "OK GO"
     while True:
+        ready.set()
         card_id = nfcr.card_id()
         if card_id != None:
           print "Got back card id:",card_id
           if playing.is_set():
             print "Already playing! Wait your turn!"
           else:
+            ready.clear()
             loading.set()
             print "Getting track from db"
             track = get_track_online(card_id)
