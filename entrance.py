@@ -81,10 +81,10 @@ def pi_monitor():
     elif error.is_set():
       for x in range(0,3):
         GPIO.output(config['platform']['red'], True)
-        GPIO.output(config['platform']['green'], True)
+  #      GPIO.output(config['platform']['green'], True)
         time.sleep(0.1)
         GPIO.output(config['platform']['red'], False)
-        GPIO.output(config['platform']['green'], False)
+ #       GPIO.output(config['platform']['green'], False)
         time.sleep(0.1)
         error.clear()
     elif playing.is_set():
