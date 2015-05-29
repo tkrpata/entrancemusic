@@ -32,7 +32,6 @@ def on_end_of_track(self):
   end_of_track.set()
 
 def play(track_uri):
-  # can move this into initialize for preload
   print "Play"
   t = threading.Thread(target=timelimit)
   t.start()
@@ -53,12 +52,13 @@ def nfc_run(nfcr):
   while True:
     if not nfcr.run():
       error.set() 
+      time.sleep(1)
     if shutdown.is_set():
       return
     time.sleep(0.1)
 
 def exit_gracefully(signum, frame):
-  print "Ctrl C - shutting down"
+  print "Shutting down"
   shutdown.set()
   signal.signal(signal.SIGINT, original_sigint)
   sys.exit(1)
@@ -155,7 +155,7 @@ if __name__ == '__main__':
 
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit_gracefully)
-    signal.signal(signal.SIGKILL, exit_gracefully)
+    signal.signal(signal.SIGTERM, exit_gracefully)
 
     loading.clear()
     print "OK GO"
