@@ -155,6 +155,7 @@ if __name__ == '__main__':
 
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit_gracefully)
+    signal.signal(signal.SIGKILL, exit_gracefully)
 
     loading.clear()
     print "OK GO"
