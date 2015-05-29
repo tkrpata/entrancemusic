@@ -50,7 +50,9 @@ def timelimit():
   return
 
 def nfc_run(nfcr):
-  while nfcr.run():
+  while True:
+    if not nfcr.run():
+      error.set() 
     if shutdown.is_set():
       return
     time.sleep(0.1)

@@ -68,6 +68,8 @@ class NFCReader(object):
                         self._poll_loop()
                   finally:
                     nfc.nfc_close(self.__device)
+                else:
+                  loop = False
             else:
                 print "NFC waiting for device"
                 self.log("NFC Waiting for device.")
@@ -76,10 +78,7 @@ class NFCReader(object):
             loop = False
         except IOError, e:
             self.log("Exception: " + str(e))
-            loop = True  # not str(e).startswith("NFC Error whilst polling")
-        # except Exception, e:
-        # loop = True
-        #    print "[!]", str(e)
+            loop = True  
         finally:
             nfc.nfc_exit(self.__context)
             self.log("NFC Clean shutdown called")
