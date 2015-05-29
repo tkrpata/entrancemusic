@@ -114,10 +114,11 @@ error = threading.Event()
 
 config = yaml.load(file("config.yml"))
 
-# start the monitor early so we light up at startup
 if config['platform']['name'] == "raspberrypi":
   t = threading.Thread(target=pi_monitor)
   t.start()
+
+loading.set()
 
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
@@ -153,6 +154,7 @@ if __name__ == '__main__':
     original_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, exit_gracefully)
 
+    loading.clear()
     print "OK GO"
     while True:
         ready.set()

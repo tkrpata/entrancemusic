@@ -17,6 +17,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+import os
 import time
 import logging
 import ctypes
@@ -58,15 +59,17 @@ class NFCReader(object):
             self._clean_card()
             conn_strings = (nfc.nfc_connstring * 10)()
             devices_found = nfc.nfc_list_devices(self.__context, conn_strings, 10)
-            if devices_found >= 1:
+            if devices_found >= 1: #FIXME this is just a quick hack
                 self.__device = nfc.nfc_open(self.__context, conn_strings[0])
-                try:
+                if self.__device:
+                  try:
                     _ = nfc.nfc_initiator_init(self.__device)
                     while True:
                         self._poll_loop()
-                finally:
+                  finally:
                     nfc.nfc_close(self.__device)
             else:
+                print "NFC waiting for device"
                 self.log("NFC Waiting for device.")
                 time.sleep(5)
         except (KeyboardInterrupt, SystemExit):
@@ -146,7 +149,7 @@ class NFCReader(object):
         # as of right now I don't want card data, just the UID
         key = "\xff\xff\xff\xff\xff\xff"
         card_id = uid.encode("hex")
-        print "Reading card", card_id
+        self.log("Read card", card_id, self._card_uid)
         self._card_id = card_id
         return
         
