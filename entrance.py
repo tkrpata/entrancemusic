@@ -14,8 +14,6 @@ import yaml
 
 from NFCReader import NFCReader
 
-config = yaml.load(file("config.yml"))
-
 # connect to the web service and get the track link
 def get_track_online(id):
   url = config['web_service'] + "/" + id
@@ -81,10 +79,8 @@ def pi_monitor():
     elif error.is_set():
       for x in range(0,3):
         GPIO.output(config['platform']['red'], True)
-  #      GPIO.output(config['platform']['green'], True)
         time.sleep(0.1)
         GPIO.output(config['platform']['red'], False)
- #       GPIO.output(config['platform']['green'], False)
         time.sleep(0.1)
         error.clear()
     elif playing.is_set():
@@ -105,6 +101,24 @@ def pi_monitor():
       GPIO.output(config['platform']['green'], False)
     time.sleep(0.1)
 
+### global init stuff
+
+# Events for coordination
+logged_in = threading.Event()
+end_of_track = threading.Event()
+playing = threading.Event()
+loading = threading.Event()
+ready = threading.Event()
+shutdown = threading.Event()
+error = threading.Event()
+
+config = yaml.load(file("config.yml"))
+
+# start the monitor early so we light up at startup
+if config['platform']['name'] == "raspberrypi":
+  t = threading.Thread(target=pi_monitor)
+  t.start()
+
 # Assuming a spotify_appkey.key in the current dir
 session = spotify.Session()
 
@@ -121,20 +135,7 @@ else:
   print "No valid audio sink config, using default"
   audio = spotify.AlsaSink(session)
 
-# Events for coordination
-logged_in = threading.Event()
-end_of_track = threading.Event()
-playing = threading.Event()
-loading = threading.Event()
-ready = threading.Event()
-shutdown = threading.Event()
-error = threading.Event()
-
 if __name__ == '__main__':
-    if config['platform']['name'] == "raspberrypi":
-      t = threading.Thread(target=pi_monitor)
-      t.start()
-
 
     logger = logging.getLogger("cardhandler").info
 
