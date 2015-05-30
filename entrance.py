@@ -11,6 +11,7 @@ import threading
 import time
 import urllib2
 import yaml
+import alsaaudio
 
 from NFCReader import NFCReader
 
@@ -37,8 +38,28 @@ def play(track_uri):
   t.start()
 
 def pause():
-  session.player.pause()
+  if config['audiosink'] == 'alsaaudio':
+    fade()
+  else:
+    session.player.pause()
 
+def fade():
+  # must be a better way to do this
+  if config['audiosink'] == 'alsaaudio':
+    mixer = alsaaudio.Mixer('PCM')
+    orig_vol = mixer.getvolume()[0]
+    vol = orig_vol
+    while vol > orig_vol - 20: 
+      print "Volume: ", mixer.getvolume()
+      vol = vol - 1
+      mixer.setvolume(vol)
+      time.sleep(0.25)
+    session.player.pause()
+    time.sleep(0.5)
+    mixer.setvolume(orig_vol)
+    return
+
+  
 def timelimit():
   playing.set()
   session.player.play()
@@ -137,6 +158,7 @@ elif config['audiosink'] == 'alsaaudio':
 else:
   print "No valid audio sink config, using default"
   audio = spotify.AlsaSink(session)
+
 
 if __name__ == '__main__':
 
