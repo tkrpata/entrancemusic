@@ -11,7 +11,6 @@ import threading
 import time
 import urllib2
 import yaml
-import alsaaudio
 
 from NFCReader import NFCReader
 
@@ -140,6 +139,16 @@ config = yaml.load(file("config.yml"))
 if config['platform']['name'] == "raspberrypi":
   t = threading.Thread(target=pi_monitor)
   t.start()
+
+# conditional load audio module
+if config['audiosink'] == "alsaaudio":
+  import alsaaudio
+elif config['audiosink'] == "portaudio":
+  import pyaudio
+else: 
+  print "audiosink not specified in config"
+  sys.exit(1)
+  
 
 loading.set()
 
